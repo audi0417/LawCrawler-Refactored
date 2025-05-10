@@ -1,5 +1,7 @@
 # LawCrawler 台灣法律條文爬蟲工具 (重構版)
 
+[![Crawler Test](https://github.com/audi0417/LawCrawler-Refactored/actions/workflows/crawler_test.yml/badge.svg)](https://github.com/audi0417/LawCrawler-Refactored/actions/workflows/crawler_test.yml)
+
 一個用於爬取台灣法律法規的專業工具，支援中央法規及地方法規（台北市、新北市、桃園市、台中市、高雄市）。此版本為重構版，優化了代碼結構和風格。
 
 ## 重構特點
@@ -9,6 +11,7 @@
 - **類型註解**：使用 Python 類型提示增強代碼可讀性
 - **一致的代碼風格**：遵循 PEP 8 標準和 Clean Code 原則
 - **完善的文檔**：每個模組、類、方法都有詳細的文檔字符串
+- **自動化測試**：使用 GitHub Actions 自動測試爬蟲功能
 
 ## 功能特色
 
@@ -37,12 +40,18 @@
 LawCrawler-Refactored/
 ├── config.py              # 配置文件
 ├── main.py                # 主入口腳本
+├── run_tests.py           # 測試執行腳本
 ├── requirements.txt       # 依賴項
 ├── crawler/               # 爬蟲包
 │   ├── __init__.py        # 包初始化
 │   ├── base_crawler.py    # 基礎爬蟲類
 │   ├── central_law_crawler.py  # 中央法規爬蟲
 │   └── taipei_law_crawler.py   # 台北市法規爬蟲
+├── tests/                 # 測試包
+│   ├── __init__.py        # 包初始化
+│   └── test_crawlers.py   # 爬蟲測試
+└── .github/workflows/     # GitHub Actions 工作流程
+    └── crawler_test.yml   # 自動化測試配置
 ```
 
 ## 安裝
@@ -89,6 +98,43 @@ python -m crawler.central_law_crawler  # 爬取中央法規
 python -m crawler.taipei_law_crawler   # 爬取台北市法規
 ```
 
+## 測試
+
+本專案提供多種測試方式，確保爬蟲功能正確運作。
+
+### 運行本地測試
+
+使用 `run_tests.py` 腳本進行測試：
+
+```bash
+# 運行所有測試
+python run_tests.py
+
+# 測試特定爬蟲
+python run_tests.py --source central
+
+# 運行特定類型的測試
+python run_tests.py --test urls    # 只測試獲取 URL
+python run_tests.py --test content # 只測試獲取內容
+python run_tests.py --test save    # 只測試保存為 JSON
+python run_tests.py --test full    # 測試完整流程
+```
+
+### 自動化測試
+
+本專案使用 GitHub Actions 進行自動化測試，在以下情況會觸發測試：
+
+1. 推送到 `main` 分支時
+2. 創建 Pull Request 到 `main` 分支時
+3. 每月1日自動運行
+
+自動化測試會：
+- 針對不同的法規來源（中央、台北市）分別測試
+- 抓取少量法規並保存為 JSON
+- 將產生的 JSON 文件作為構建產物保存
+
+可以在 GitHub 的 Actions 頁面查看測試結果。
+
 ## 輸出格式
 
 所有爬取的法規都會以 JSON 格式保存，基本結構如下：
@@ -116,6 +162,7 @@ python -m crawler.taipei_law_crawler   # 爬取台北市法規
 2. 創建一個繼承自 `BaseLawCrawler` 的新爬蟲類
 3. 實現必要的方法：`get_law_urls()`, `get_law_json()`, `run()`
 4. 在 `main.py` 中添加對新爬蟲的調用
+5. 在 `tests/test_crawlers.py` 中添加相應的測試類
 
 例如，添加對新的縣市法規的支持：
 
@@ -154,6 +201,9 @@ A: 您可以在 `config.py` 中調整 `delay_min`, `delay_max` 和 `max_workers`
 **Q: 如何添加對新的法規來源的支持？**  
 A: 請參考「擴展指南」章節。
 
+**Q: 自動化測試失敗了怎麼辦？**  
+A: 檢查 GitHub Actions 日誌，並在本地運行 `python run_tests.py` 進行診斷。可能是目標網站結構變化、網路問題或是爬蟲代碼需要更新。
+
 ## 貢獻指南
 
 歡迎提交 Pull Request 或建立 Issue！
@@ -185,6 +235,7 @@ A: 請參考「擴展指南」章節。
   - 實現基於類的繼承設計
   - 統一代碼風格和命名約定
   - 添加完整的類型註解和文檔
+  - 增加自動化測試功能
 
 ---
 
