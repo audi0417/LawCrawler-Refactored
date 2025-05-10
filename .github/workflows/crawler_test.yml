@@ -1,0 +1,91 @@
+name: Crawler Test
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+  schedule:
+    - cron: '0 0 1 * *'  # 每月1日運行
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        source: ['central', 'taipei']
+
+    steps:
+    - uses: actions/checkout@v3
+    
+    - name: Set up Python 3.9
+      uses: actions/setup-python@v4
+      with:
+        python-version: 3.9
+    
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+    
+    - name: Test crawler
+      run: |
+        # 建立一個簡單的測試腳本，只抓取一個法規作為測試
+        cat > test_crawler.py << EOF
+        import logging
+        import sys
+        import os
+        from crawler.base_crawler import BaseLawCrawler
+        
+        if "${{ matrix.source }}" == "central":
+            from crawler.central_law_crawler import CentralLawCrawler
+            crawler = CentralLawCrawler()
+        elif "${{ matrix.source }}" == "taipei":
+            from crawler.taipei_law_crawler import TaipeiLawCrawler
+            crawler = TaipeiLawCrawler()
+        else:
+            sys.exit("未知的來源")
+        
+        # 修改爬蟲配置，減少抓取數量
+        crawler.config['max_workers'] = 2
+        crawler.config['batch_size'] = 1
+        
+        # 覆寫 process_batch，只處理前3個URL
+        original_process_batch = crawler.process_batch
+        def limited_process_batch(urls, process_func, desc="處理中"):
+            print(f"找到 {len(urls)} 個URL，將只處理前3個")
+            return original_process_batch(urls[:3], process_func, desc)
+        
+        crawler.process_batch = limited_process_batch
+        
+        # 設置日誌
+        logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
+        
+        # 執行爬蟲
+        crawler.run()
+        
+        # 確認是否有產生JSON文件
+        output_dir = crawler.config['output_dir']
+        if os.path.exists(output_dir) and len(os.listdir(output_dir)) > 0:
+            print(f"✅ 成功抓取法規並保存為JSON！儲存在 {output_dir} 目錄")
+            print(f"保存的檔案:")
+            for file in os.listdir(output_dir):
+                print(f"  - {file}")
+            sys.exit(0)
+        else:
+            print(f"❌ 未能成功抓取法規！")
+            sys.exit(1)
+        EOF
+        
+        python test_crawler.py
+    
+    - name: Upload JSON results
+      uses: actions/upload-artifact@v3
+      if: success()
+      with:
+        name: ${{ matrix.source }}-law-jsons
+        path: |
+          law_jsons/
+          taipei_law_jsons/
+        retention-days: 3
