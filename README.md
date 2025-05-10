@@ -2,7 +2,7 @@
 
 [![Crawler Test](https://github.com/audi0417/LawCrawler-Refactored/actions/workflows/crawler_test.yml/badge.svg)](https://github.com/audi0417/LawCrawler-Refactored/actions/workflows/crawler_test.yml)
 
-![Updated time](https://byob.yarr.is/audi0417/LawCrawler-Refactored/time)
+![](https://byob.yarr.is/audi0417LawCrawler-Refactored/time)
 
 一個用於爬取台灣法律法規的專業工具，支援中央法規及地方法規（台北市、新北市、桃園市、台中市、高雄市）。此版本為重構版，優化了代碼結構和風格。
 
