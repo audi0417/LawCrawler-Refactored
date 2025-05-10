@@ -17,10 +17,10 @@ jobs:
         source: ['central', 'taipei']
 
     steps:
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@v4
     
     - name: Set up Python 3.9
-      uses: actions/setup-python@v4
+      uses: actions/setup-python@v5
       with:
         python-version: 3.9
     
@@ -81,7 +81,7 @@ jobs:
         python test_crawler.py
     
     - name: Upload JSON results
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4  # 更新到 v4 版本
       if: success()
       with:
         name: ${{ matrix.source }}-law-jsons
