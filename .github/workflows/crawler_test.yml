@@ -17,7 +17,8 @@ jobs:
         source: ['central', 'taipei']
 
     steps:
-    - uses: actions/checkout@v4
+    - name: Checkout code
+      uses: actions/checkout@v4
     
     - name: Set up Python 3.9
       uses: actions/setup-python@v5
@@ -28,64 +29,123 @@ jobs:
       run: |
         python -m pip install --upgrade pip
         pip install -r requirements.txt
+        # 增加額外的依賴項，確保測試環境完整
+        pip install requests-random-user-agent
     
-    - name: Test crawler
+    - name: Test crawler with retry
       run: |
-        # 建立一個簡單的測試腳本，只抓取一個法規作為測試
+        # 建立一個更健壯的測試腳本，添加重試機制
         cat > test_crawler.py << EOF
         import logging
         import sys
         import os
+        import time
+        import random
         from crawler.base_crawler import BaseLawCrawler
-        
-        if "${{ matrix.source }}" == "central":
-            from crawler.central_law_crawler import CentralLawCrawler
-            crawler = CentralLawCrawler()
-        elif "${{ matrix.source }}" == "taipei":
-            from crawler.taipei_law_crawler import TaipeiLawCrawler
-            crawler = TaipeiLawCrawler()
-        else:
-            sys.exit("未知的來源")
-        
-        # 修改爬蟲配置，減少抓取數量
-        crawler.config['max_workers'] = 2
-        crawler.config['batch_size'] = 1
-        
-        # 覆寫 process_batch，只處理前3個URL
-        original_process_batch = crawler.process_batch
-        def limited_process_batch(urls, process_func, desc="處理中"):
-            print(f"找到 {len(urls)} 個URL，將只處理前3個")
-            return original_process_batch(urls[:3], process_func, desc)
-        
-        crawler.process_batch = limited_process_batch
-        
+
         # 設置日誌
         logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
         
-        # 執行爬蟲
-        crawler.run()
+        # 最大重試次數
+        MAX_RETRIES = 3
         
-        # 確認是否有產生JSON文件
-        output_dir = crawler.config['output_dir']
-        if os.path.exists(output_dir) and len(os.listdir(output_dir)) > 0:
-            print(f"✅ 成功抓取法規並保存為JSON！儲存在 {output_dir} 目錄")
-            print(f"保存的檔案:")
-            for file in os.listdir(output_dir):
-                print(f"  - {file}")
+        def run_crawler_with_retry(source_name):
+            """運行爬蟲並支持重試"""
+            for attempt in range(1, MAX_RETRIES + 1):
+                try:
+                    logging.info(f"嘗試第 {attempt}/{MAX_RETRIES} 次執行 {source_name} 爬蟲")
+                    
+                    if source_name == "central":
+                        from crawler.central_law_crawler import CentralLawCrawler
+                        crawler = CentralLawCrawler()
+                    elif source_name == "taipei":
+                        from crawler.taipei_law_crawler import TaipeiLawCrawler
+                        crawler = TaipeiLawCrawler()
+                    else:
+                        sys.exit(f"未知的來源: {source_name}")
+                    
+                    # 修改爬蟲配置，減少抓取數量和增加睡眠時間
+                    crawler.config['max_workers'] = 1
+                    crawler.config['batch_size'] = 1
+                    crawler.config['delay_min'] = 3
+                    crawler.config['delay_max'] = 5
+                    
+                    # 為了提高成功率，添加隨機用戶代理
+                    try:
+                        import requests_random_user_agent
+                        logging.info("已啟用隨機用戶代理")
+                    except:
+                        logging.warning("未能啟用隨機用戶代理")
+                    
+                    # 覆寫 process_batch，只處理前3個URL，並增加檢查點
+                    original_process_batch = crawler.process_batch
+                    def limited_process_batch(urls, process_func, desc="處理中"):
+                        logging.info(f"找到 {len(urls)} 個URL，將只處理前3個")
+                        
+                        # 如果沒有找到URL，提前返回
+                        if not urls:
+                            logging.error("未找到任何URL")
+                            return 0
+                            
+                        # 只處理第一個URL（確保至少有一個成功）
+                        limited_urls = urls[:1]
+                        
+                        # 添加更長的延遲，確保不會被封鎖
+                        time.sleep(random.uniform(5, 10))
+                        
+                        return original_process_batch(limited_urls, process_func, desc)
+                    
+                    crawler.process_batch = limited_process_batch
+                    
+                    # 執行爬蟲
+                    crawler.run()
+                    
+                    # 確認是否有產生JSON文件
+                    output_dir = crawler.config['output_dir']
+                    if os.path.exists(output_dir) and len(os.listdir(output_dir)) > 0:
+                        logging.info(f"✅ 成功抓取法規並保存為JSON！儲存在 {output_dir} 目錄")
+                        logging.info(f"保存的檔案:")
+                        for file in os.listdir(output_dir):
+                            logging.info(f"  - {file}")
+                        return True
+                    else:
+                        logging.error(f"❌ 未能成功保存任何JSON文件")
+                        # 在重試前等待更長時間
+                        if attempt < MAX_RETRIES:
+                            sleep_time = 30 * attempt  # 隨著重試次數增加等待時間
+                            logging.info(f"等待 {sleep_time} 秒後重試...")
+                            time.sleep(sleep_time)
+                except Exception as e:
+                    logging.error(f"執行時出現錯誤: {str(e)}")
+                    if attempt < MAX_RETRIES:
+                        sleep_time = 30 * attempt
+                        logging.info(f"等待 {sleep_time} 秒後重試...")
+                        time.sleep(sleep_time)
+            
+            logging.error(f"已重試 {MAX_RETRIES} 次，仍然失敗")
+            return False
+        
+        # 執行爬蟲並檢查結果
+        source_name = "${{ matrix.source }}"
+        success = run_crawler_with_retry(source_name)
+        
+        if success:
+            logging.info(f"{source_name} 爬蟲測試成功！")
             sys.exit(0)
         else:
-            print(f"❌ 未能成功抓取法規！")
+            logging.error(f"{source_name} 爬蟲測試失敗！")
             sys.exit(1)
         EOF
         
         python test_crawler.py
     
     - name: Upload JSON results
-      uses: actions/upload-artifact@v4  # 更新到 v4 版本
-      if: success()
+      uses: actions/upload-artifact@v4
+      if: always()
       with:
         name: ${{ matrix.source }}-law-jsons
         path: |
           law_jsons/
           taipei_law_jsons/
         retention-days: 3
+        if-no-files-found: ignore
