@@ -10,7 +10,14 @@ import sys
 import unittest
 from typing import List, Optional
 
-from tests.test_crawlers import TestCentralLawCrawler, TestTaipeiLawCrawler
+from tests.test_crawlers import (
+    TestCentralLawCrawler, 
+    TestTaipeiLawCrawler,
+    TestNewTaipeiLawCrawler,
+    TestTaichungLawCrawler,
+    TestTaoyuanLawCrawler,
+    TestKaohsiungLawCrawler
+)
 
 
 def setup_logging() -> None:
@@ -38,7 +45,7 @@ def parse_args() -> argparse.Namespace:
     
     parser.add_argument(
         '--source',
-        choices=['central', 'taipei', 'all'],
+        choices=['central', 'taipei', 'new_taipei', 'taichung', 'taoyuan', 'kaohsiung', 'all'],
         default='all',
         help='要測試的法規來源 (默認: all)'
     )
@@ -70,6 +77,18 @@ def get_test_cases(source: str) -> List[unittest.TestCase]:
     
     if source in ['taipei', 'all']:
         test_cases.append(TestTaipeiLawCrawler)
+    
+    if source in ['new_taipei', 'all']:
+        test_cases.append(TestNewTaipeiLawCrawler)
+    
+    if source in ['taichung', 'all']:
+        test_cases.append(TestTaichungLawCrawler)
+    
+    if source in ['taoyuan', 'all']:
+        test_cases.append(TestTaoyuanLawCrawler)
+    
+    if source in ['kaohsiung', 'all']:
+        test_cases.append(TestKaohsiungLawCrawler)
     
     return test_cases
 
