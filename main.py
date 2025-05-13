@@ -9,6 +9,10 @@ from typing import List
 
 from crawler.central_law_crawler import CentralLawCrawler
 from crawler.taipei_law_crawler import TaipeiLawCrawler
+from crawler.new_taipei_law_crawler import NewTaipeiLawCrawler
+from crawler.taichung_law_crawler import TaichungLawCrawler
+from crawler.taoyuan_law_crawler import TaoyuanLawCrawler
+from crawler.kaohsiung_law_crawler import KaohsiungLawCrawler
 
 
 def setup_logging() -> None:
@@ -36,7 +40,7 @@ def parse_args() -> argparse.Namespace:
     
     parser.add_argument(
         '--source', 
-        choices=['central', 'taipei', 'all'],
+        choices=['central', 'taipei', 'new_taipei', 'taichung', 'taoyuan', 'kaohsiung', 'all'],
         default='all',
         help='要爬取的法規來源 (默認: all)'
     )
@@ -60,6 +64,26 @@ def main() -> None:
         logging.info("啟動台北市法規爬蟲")
         taipei_crawler = TaipeiLawCrawler()
         taipei_crawler.run()
+    
+    if args.source in ['new_taipei', 'all']:
+        logging.info("啟動新北市法規爬蟲")
+        new_taipei_crawler = NewTaipeiLawCrawler()
+        new_taipei_crawler.run()
+    
+    if args.source in ['taichung', 'all']:
+        logging.info("啟動台中市法規爬蟲")
+        taichung_crawler = TaichungLawCrawler()
+        taichung_crawler.run()
+    
+    if args.source in ['taoyuan', 'all']:
+        logging.info("啟動桃園市法規爬蟲")
+        taoyuan_crawler = TaoyuanLawCrawler()
+        taoyuan_crawler.run()
+    
+    if args.source in ['kaohsiung', 'all']:
+        logging.info("啟動高雄市法規爬蟲")
+        kaohsiung_crawler = KaohsiungLawCrawler()
+        kaohsiung_crawler.run()
 
 
 if __name__ == "__main__":
