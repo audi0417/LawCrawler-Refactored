@@ -14,7 +14,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        source: ['central', 'taipei']
+        source: ['central', 'taipei', 'new_taipei', 'taichung', 'taoyuan', 'kaohsiung']
 
     steps:
     - name: Checkout code
@@ -61,6 +61,18 @@ jobs:
                     elif source_name == "taipei":
                         from crawler.taipei_law_crawler import TaipeiLawCrawler
                         crawler = TaipeiLawCrawler()
+                    elif source_name == "new_taipei":
+                        from crawler.new_taipei_law_crawler import NewTaipeiLawCrawler
+                        crawler = NewTaipeiLawCrawler()
+                    elif source_name == "taichung":
+                        from crawler.taichung_law_crawler import TaichungLawCrawler
+                        crawler = TaichungLawCrawler()
+                    elif source_name == "taoyuan":
+                        from crawler.taoyuan_law_crawler import TaoyuanLawCrawler
+                        crawler = TaoyuanLawCrawler()
+                    elif source_name == "kaohsiung":
+                        from crawler.kaohsiung_law_crawler import KaohsiungLawCrawler
+                        crawler = KaohsiungLawCrawler()
                     else:
                         sys.exit(f"未知的來源: {source_name}")
                     
@@ -147,5 +159,9 @@ jobs:
         path: |
           law_jsons/
           taipei_law_jsons/
+          new_taipei_law_jsons/
+          taichung_law_jsons/
+          taoyuan_law_jsons/
+          kaohsiung_law_jsons/
         retention-days: 3
         if-no-files-found: ignore
