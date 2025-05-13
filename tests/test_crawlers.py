@@ -12,6 +12,10 @@ from typing import Any, Dict, List, Type
 from crawler.base_crawler import BaseLawCrawler
 from crawler.central_law_crawler import CentralLawCrawler
 from crawler.taipei_law_crawler import TaipeiLawCrawler
+from crawler.new_taipei_law_crawler import NewTaipeiLawCrawler
+from crawler.taichung_law_crawler import TaichungLawCrawler
+from crawler.taoyuan_law_crawler import TaoyuanLawCrawler
+from crawler.kaohsiung_law_crawler import KaohsiungLawCrawler
 
 
 class BaseCrawlerTest:
@@ -164,6 +168,50 @@ class TestTaipeiLawCrawler(unittest.TestCase, BaseCrawlerTest):
     def setUp(self):
         self.crawler_class = TaipeiLawCrawler
         self.source_name = "台北市法規"
+        super().setUp()
+
+
+class TestNewTaipeiLawCrawler(unittest.TestCase, BaseCrawlerTest):
+    """
+    新北市法規爬蟲測試
+    """
+    
+    def setUp(self):
+        self.crawler_class = NewTaipeiLawCrawler
+        self.source_name = "新北市法規"
+        super().setUp()
+
+
+class TestTaichungLawCrawler(unittest.TestCase, BaseCrawlerTest):
+    """
+    台中市法規爬蟲測試
+    """
+    
+    def setUp(self):
+        self.crawler_class = TaichungLawCrawler
+        self.source_name = "台中市法規"
+        super().setUp()
+
+
+class TestTaoyuanLawCrawler(unittest.TestCase, BaseCrawlerTest):
+    """
+    桃園市法規爬蟲測試
+    """
+    
+    def setUp(self):
+        self.crawler_class = TaoyuanLawCrawler
+        self.source_name = "桃園市法規"
+        super().setUp()
+
+
+class TestKaohsiungLawCrawler(unittest.TestCase, BaseCrawlerTest):
+    """
+    高雄市法規爬蟲測試
+    """
+    
+    def setUp(self):
+        self.crawler_class = KaohsiungLawCrawler
+        self.source_name = "高雄市法規"
         super().setUp()
 
 
